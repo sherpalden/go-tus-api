@@ -1,0 +1,16 @@
+# files to ignore
+.env
+serviceAccountKey.json
+
+# unintended files
+server.log
+clean-gin
+__debug_bin
+gin-bin
+
+#editor based
+.idea
+.vscode
+.DS_Store
+*/.DS_Store
+
