@@ -5,6 +5,7 @@ import (
 	"log"
 	"path/filepath"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/tus/tusd/pkg/gcsstore"
 	tusd "github.com/tus/tusd/pkg/handler"
@@ -12,8 +13,7 @@ import (
 )
 
 func FileUploadHandler() *tusd.UnroutedHandler {
-	// bucket := "your-gcs-bucket-name"
-	bucket := "kaki-oki-bucket-dev"
+	bucket := "your-gcs-bucket-name"
 	serviceAccountKeyFilePath, err := filepath.Abs("./serviceAccountKey.json")
 	if err != nil {
 		log.Fatal("Unable to load serviceAccountKey.json file:: ", err.Error())
@@ -27,7 +27,7 @@ func FileUploadHandler() *tusd.UnroutedHandler {
 	locker := memorylocker.New()
 
 	store := gcsstore.New(bucket, gcs_service)
-	store.ObjectPrefix = "videos" //destination for file object in GCS bucket
+	store.ObjectPrefix = "tus-files" //destination for file object in GCS bucket
 
 	locker.UseIn(composer)
 	store.UseIn(composer)
@@ -52,6 +52,46 @@ func FileUploadHandler() *tusd.UnroutedHandler {
 
 func main() {
 	router := gin.Default()
+
+	router.Use(cors.New(cors.Config{
+		AllowOrigins: []string{"http://localhost:3000"},
+		AllowMethods: []string{"PUT", "PATCH", "GET", "POST", "OPTIONS", "DELETE"},
+		AllowHeaders: []string{
+			"Access-Control-Allow-Origin",
+			"Access-Control-Allow-Headers",
+			"X-HTTP-Method-Override",
+			"Upload-Length",
+			"Upload-Offset",
+			"Tus-Resumable",
+			"Upload-Metadata",
+			"Upload-Defer-Length",
+			"Upload-Concat",
+			"User-Agent",
+			"Referrer",
+			"Origin",
+			"Content-Type",
+			"Content-Length",
+			"Content-Range",
+			"Accept-Encoding",
+			"Accept",
+			"Cache-Control",
+			"X-Agent-User",
+			"X-Requested-With",
+		},
+		ExposeHeaders: []string{
+			"Upload-Offset",
+			"Location",
+			"Tus-Version",
+			"Tus-Resumable",
+			"Tus-Max-Size",
+			"Tus-Extension",
+			"Upload-Metadata",
+			"Upload-Defer-Length",
+			"Upload-Concat",
+			"Upload-Offset",
+			"Upload-Length",
+		},
+	}))
 
 	router.POST("tus-files/", gin.WrapF(FileUploadHandler().PostFile))
 	router.HEAD("tus-files/:id", gin.WrapF(FileUploadHandler().HeadFile))
